@@ -5,9 +5,7 @@
  */
 const buildTabsTree = async () => {
   const allGroups = await chrome.tabGroups.query({});
-  console.log("DEBUG All Tab Groups:", allGroups);
   const allTabs = await chrome.tabs.query({});
-  console.log("DEBUG All Tabs:", allTabs);
 
   const tabsByGroup = Array.from(allTabs).reduce((collection, tab, index) => {
     // Discard ungrouped tabs
@@ -19,6 +17,7 @@ const buildTabsTree = async () => {
     if (!tabGroup) return collection; // Tab group not found (should not happen)
 
     // Determine if group is a sub-group
+    // TO-DO: There is a bug here where multiple tabs in a sub-group recreates the group as a parent group
     let parentGroup;
     const previousTab = allTabs[index - 1];
     if (previousTab.groupId !== -1 && previousTab.groupId !== tab.groupId) {
@@ -54,19 +53,46 @@ const buildTabsTree = async () => {
     return collection;
   }, []);
 
-  console.log("DEBUG Tabs by Group:", tabsByGroup);
   return tabsByGroup;
 };
 
+/**
+ * Write the current tabs tree to storage
+ */
+const writeToStorage = async () => {
+  const tabTree = await buildTabsTree();
+
+  await chrome.storage.local.set({ tabTree });
+}
+
+/**
+ * Retrieves the current tab tree from storage
+ */
+const readFromStorage = async () => {
+  const result = await chrome.storage.local.get("tabTree");
+  return result.tabTree;
+}
+
 // Listen for group collapse/expand events to update the tree
 chrome.tabGroups.onUpdated.addListener(async (tabGroup) => {
-  console.log("DEBUG Tab group updated", tabGroup);
-  const tabGroups = await buildTabsTree();
-
+  const tabGroups = await readFromStorage();
   const isParentGroup = tabGroups?.find(g => g.groupId === tabGroup.id);
   if (isParentGroup) {
-    console.log("DEBUG Parent group updated");
+    console.log("DEBUG Parent group updated", { tabGroup });
   } else {
-    console.log("DEBUG Sub-group updated");
+    console.log("DEBUG Sub-group updated", { tabGroup });
   }
 });
+
+// Listen for tab updates to rebuild the tree
+chrome.tabs.onUpdated.addListener(async () => {
+  // On any tab update, rebuild the tree
+  await writeToStorage();
+  const currentTabTree = await readFromStorage();
+  console.log("DEBUG Current Tab Tree from Storage:", currentTabTree);
+});
+
+writeToStorage();
+
+// If an update was to a group, enact collapse expand
+// If not on a group, update the tab tree in storage
