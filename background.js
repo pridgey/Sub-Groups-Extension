@@ -17,7 +17,12 @@ const buildTabsTree = async () => {
     if (!tabGroup) return collection; // Tab group not found (should not happen)
 
     // Determine if group is a sub-group
-    // TO-DO: There is a bug here where multiple tabs in a sub-group recreates the group as a parent group
+    const subGroups = collection.flatMap((group) => group.subGroups || []);
+    // If tab belongs to an existing sub-group, skip adding as a parent group
+    if (subGroups.some(sg => sg.groupId === tabGroup.id)) {
+      return collection;
+    }
+    // Determine parent group based on previous tab's group color
     let parentGroup;
     const previousTab = allTabs[index - 1];
     if (previousTab.groupId !== -1 && previousTab.groupId !== tab.groupId) {
@@ -32,7 +37,7 @@ const buildTabsTree = async () => {
     if (parentGroup) {
       // Add this group as a sub-group of the parent
       collection.at(-1).subGroups.push({
-        groupdId: tabGroup.id,
+        groupId: tabGroup.id,
         title: tabGroup.title,
         tabs: allTabs.filter(t => t.groupId === tabGroup.id),
         collapsed: tabGroup.collapsed || false
