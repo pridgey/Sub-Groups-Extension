@@ -76,7 +76,7 @@ async function buildTabsTree(): Promise<TabGroup[]> {
     const prevTab = allTabs[i - 1];
     const prevGroup =
       prevTab?.groupId !== -1 && prevTab?.groupId !== tab.groupId
-        ? groupMap.get(prevTab.groupId)
+        ? groupMap.get(prevTab?.groupId)
         : null;
 
     if (prevGroup?.color === tabGroup.color && result.length > 0) {

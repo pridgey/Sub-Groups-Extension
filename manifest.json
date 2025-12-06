@@ -3,7 +3,7 @@
   "name": "Tab Sub-Groups",
   "version": "1.0",
   "description": "Create collapsible sub-groups within Chrome tab groups",
-  "permissions": ["tabs", "tabGroups", "storage", "tabHide"],
+  "permissions": ["tabs", "tabGroups", "storage"],
   "background": {
     "service_worker": "dist/background.js"
   },

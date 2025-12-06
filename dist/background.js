@@ -39,7 +39,7 @@ async function buildTabsTree() {
         // Determine if this is a sub-group based on previous tab's group color
         const prevTab = allTabs[i - 1];
         const prevGroup = prevTab?.groupId !== -1 && prevTab?.groupId !== tab.groupId
-            ? groupMap.get(prevTab.groupId)
+            ? groupMap.get(prevTab?.groupId)
             : null;
         if (prevGroup?.color === tabGroup.color && result.length > 0) {
             // Add as sub-group to the last parent
